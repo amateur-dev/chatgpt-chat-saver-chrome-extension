@@ -21,63 +21,18 @@
     // State management
     let saveButton = null;
     let isGenerating = false;
-    let librariesLoaded = false;
-
-    /**
-     * Load libraries from CDN
-     */
-    function loadLibraries() {
-        return new Promise((resolve, reject) => {
-            let loadedCount = 0;
-            const totalLibraries = 2;
-
-            function checkComplete() {
-                loadedCount++;
-                if (loadedCount === totalLibraries) {
-                    // Wait a bit for libraries to initialize
-                    setTimeout(() => {
-                        if (window.jsPDF && window.html2canvas) {
-                            librariesLoaded = true;
-                            console.log('ChatGPT PDF Saver: Libraries loaded successfully');
-                            resolve();
-                        } else {
-                            reject(new Error('Libraries failed to initialize'));
-                        }
-                    }, 100);
-                }
-            }
-
-            // Load jsPDF
-            const jsPDFScript = document.createElement('script');
-            jsPDFScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-            jsPDFScript.crossOrigin = 'anonymous';
-            jsPDFScript.onload = checkComplete;
-            jsPDFScript.onerror = () => reject(new Error('Failed to load jsPDF'));
-            document.head.appendChild(jsPDFScript);
-
-            // Load html2canvas
-            const html2canvasScript = document.createElement('script');
-            html2canvasScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-            html2canvasScript.crossOrigin = 'anonymous';
-            html2canvasScript.onload = checkComplete;
-            html2canvasScript.onerror = () => reject(new Error('Failed to load html2canvas'));
-            document.head.appendChild(html2canvasScript);
-        });
-    }
 
     /**
      * Initialize the extension
      */
-    async function init() {
+    function init() {
         console.log('ChatGPT PDF Saver: Initializing...');
         
-        try {
-            await loadLibraries();
-        } catch (error) {
-            console.error('ChatGPT PDF Saver: Failed to load libraries:', error);
-        }
+        // Check if libraries are loaded (they should be loaded by manifest)
+        console.log('jsPDF available:', typeof window.jsPDF);
+        console.log('html2canvas available:', typeof window.html2canvas);
         
-        // Setup button regardless of library status
+        // Setup button
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', setupSaveButton);
         } else {
@@ -98,23 +53,10 @@
             existingButton.remove();
         }
 
-        // Find the best location to inject the button
-        const targetContainer = findButtonContainer();
-        if (targetContainer) {
-            injectSaveButton(targetContainer);
-            console.log('ChatGPT PDF Saver: Save button injected successfully');
-        } else {
-            console.log('ChatGPT PDF Saver: Could not find container, retrying...');
-            setTimeout(setupSaveButton, 2000);
-        }
-    }
-
-    /**
-     * Find the appropriate container for the save button
-     */
-    function findButtonContainer() {
-        // Always create floating container for now to ensure button appears
-        return createFloatingContainer();
+        // Create floating container
+        const targetContainer = createFloatingContainer();
+        injectSaveButton(targetContainer);
+        console.log('ChatGPT PDF Saver: Save button injected successfully');
     }
 
     /**
@@ -171,8 +113,8 @@
         }
 
         // Check if libraries are available
-        if (!librariesLoaded || typeof window.jsPDF === 'undefined' || typeof window.html2canvas === 'undefined') {
-            alert('PDF libraries are not loaded yet. Please wait a moment and try again.');
+        if (typeof window.jsPDF === 'undefined' || typeof window.html2canvas === 'undefined') {
+            alert('PDF libraries are not loaded. Please reload the page and try again.');
             console.error('ChatGPT PDF Saver: Libraries not available');
             return;
         }
@@ -211,18 +153,13 @@
     async function generatePDF() {
         console.log('ChatGPT PDF Saver: Starting PDF generation...');
         
-        // Find the conversation container
-        const conversationContainer = findConversationContainer();
-        if (!conversationContainer) {
-            throw new Error('Could not find conversation container');
-        }
-
-        // Create a simple PDF for now
+        // Create a simple PDF for testing
         const { jsPDF } = window.jsPDF;
         const pdf = new jsPDF();
         
         pdf.text('ChatGPT Conversation', 10, 10);
         pdf.text('Generated on: ' + new Date().toLocaleString(), 10, 20);
+        pdf.text('Extension is working!', 10, 30);
         
         // Save the PDF
         const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
@@ -231,26 +168,6 @@
         pdf.save(filename);
         
         console.log('ChatGPT PDF Saver: PDF generated successfully');
-    }
-
-    /**
-     * Find the main conversation container
-     */
-    function findConversationContainer() {
-        const selectors = [
-            '[role="main"]',
-            '.flex.flex-col.text-sm',
-            'main'
-        ];
-
-        for (const selector of selectors) {
-            const element = document.querySelector(selector);
-            if (element) {
-                return element;
-            }
-        }
-
-        return document.body;
     }
 
     /**
