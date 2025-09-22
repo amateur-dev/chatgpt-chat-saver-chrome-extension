@@ -15,8 +15,8 @@
         "https://chatgpt.com/*"
       ],
       "js": [
-        "libs/jspdf.umd.min.js",
         "libs/html2canvas.min.js",
+        "libs/jspdf.umd.min.js",
         "content.js"
       ],
       "css": ["styles.css"],

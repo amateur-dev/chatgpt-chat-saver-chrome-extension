@@ -1,4 +1,41 @@
-/**
+// ...existing code...
+    async function createPDFFromHTML(element) {
+      const canvas = await window.html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const JsPDF = getJsPDF();
+      const pdf = new JsPDF({
+        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const imgWidth = 210;   // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+-     const imgHeight = (canvas.height * imgWidth) / canvas.width;
++     const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+-     const imgData = canvas.toDataURL('image/png');
++     // JPEG keeps size small; 0.92 is a good default
++     const imgData = canvas.toDataURL('image/jpeg', 0.92);
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+-     while (heightLeft >= 0) {
++     while (heightLeft > 0) { // avoid an extra blank/overlapping page
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+-       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
++       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      pdf.save(`chatgpt-conversation-${timestamp}.pdf`);
+    }
+// ...existing code.../**
  * ChatGPT Chat Saver - Content Script
  * Injects a "Save as PDF" button into ChatGPT interface
  * Captures full conversation and exports to PDF using client-side libraries
@@ -22,35 +59,27 @@
     let saveButton = null;
     let isGenerating = false;
 
+    // Normalize jsPDF ctor from UMD
+    function getJsPDF() {
+      return (window.jspdf && window.jspdf.jsPDF) ||
+             (window.jsPDF && window.jsPDF.jsPDF) ||
+             window.jsPDF; // some builds expose ctor directly
+    }
+
     /**
      * Wait for libraries to be available
      */
-    function waitForLibraries() {
-        return new Promise((resolve) => {
-            let attempts = 0;
-            const maxAttempts = 50;
-            
-            function checkLibraries() {
-                attempts++;
-                
-                const jsPDFAvailable = window.jsPDF || window.jspdf || (typeof jsPDF !== 'undefined' ? jsPDF : null);
-                const html2canvasAvailable = window.html2canvas || (typeof html2canvas !== 'undefined' ? html2canvas : null);
-                
-                if (jsPDFAvailable && html2canvasAvailable) {
-                    window.jsPDF = jsPDFAvailable;
-                    window.html2canvas = html2canvasAvailable;
-                    console.log('ChatGPT PDF Saver: Libraries found and ready!');
-                    resolve(true);
-                } else if (attempts < maxAttempts) {
-                    setTimeout(checkLibraries, 100);
-                } else {
-                    console.error('ChatGPT PDF Saver: Libraries not found after maximum attempts');
-                    resolve(false);
-                }
-            }
-            
-            checkLibraries();
-        });
+    function waitForLibraries(maxMs = 5000) {
+      const start = Date.now();
+      return new Promise((resolve) => {
+        (function check() {
+          const hasH2C = typeof window.html2canvas === 'function';
+          const JsPDF = getJsPDF();
+          if (hasH2C && JsPDF) return resolve(true);
+          if (Date.now() - start > maxMs) return resolve(false);
+          setTimeout(check, 100);
+        })();
+      });
     }
 
     /**
@@ -58,10 +87,11 @@
      */
     async function init() {
         console.log('ChatGPT PDF Saver: Initializing...');
+        const ok = await waitForLibraries();
+        console.log('jsPDF available:', !!getJsPDF());
+        console.log('html2canvas available:', typeof window.html2canvas);
         
-        const librariesReady = await waitForLibraries();
-        
-        if (!librariesReady) {
+        if (!ok) {
             console.error('ChatGPT PDF Saver: Failed to load required libraries');
         }
         
@@ -137,7 +167,9 @@
             return;
         }
 
-        if (typeof window.jsPDF === 'undefined' || typeof window.html2canvas === 'undefined') {
+        const JsPDFCtor = getJsPDF();
+        if (!JsPDFCtor || typeof window.html2canvas !== 'function') {
+            console.error('PDF libs missing', { JsPDFCtor, html2canvas: typeof window.html2canvas });
             alert('PDF libraries are not loaded. Please reload the page and try again.');
             return;
         }
@@ -392,57 +424,36 @@
      * Create PDF from HTML using html2canvas
      */
     async function createPDFFromHTML(element) {
-        try {
-            // Capture the element as canvas
-            const canvas = await window.html2canvas(element, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#ffffff',
-                logging: false,
-                width: element.scrollWidth,
-                height: element.scrollHeight
-            });
+      const canvas = await window.html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const JsPDF = getJsPDF();
+      const pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-            // Create PDF
-            const { jsPDF } = window.jsPDF;
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4'
-            });
+      // Calculate dimensions
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm  
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
 
-            // Calculate dimensions
-            const imgWidth = 210; // A4 width in mm
-            const pageHeight = 295; // A4 height in mm  
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            let heightLeft = imgHeight;
+      const imgData = canvas.toDataURL('image/png');
+      let position = 0;
 
-            const imgData = canvas.toDataURL('image/png');
-            let position = 0;
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
 
-            // Add first page
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
+      // Add additional pages if needed
+      while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+      }
 
-            // Add additional pages if needed
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-
-            // Save the PDF
-            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-            const filename = `chatgpt-conversation-${timestamp}.pdf`;
-            
-            pdf.save(filename);
-            
-        } catch (error) {
-            console.error('ChatGPT PDF Saver: Error in PDF generation:', error);
-            throw error;
-        }
+      // Save the PDF
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const filename = `chatgpt-conversation-${timestamp}.pdf`;
+      
+      pdf.save(filename);
     }
 
     /**
