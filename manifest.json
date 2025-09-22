@@ -7,17 +7,22 @@
     "activeTab"
   ],
   "host_permissions": [
-    "https://chat.openai.com/*"
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*"
   ],
   "content_scripts": [
     {
-      "matches": ["https://chat.openai.com/*"],
+      "matches": [
+        "https://chat.openai.com/*",
+        "https://chatgpt.com/*"
+      ],
       "js": [
         "libs/jspdf.umd.min.js",
         "libs/html2canvas.min.js",
         "content.js"
       ],
-      "css": ["styles.css"]
+      "css": ["styles.css"],
+      "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
