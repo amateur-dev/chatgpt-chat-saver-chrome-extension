@@ -430,6 +430,58 @@
         });
     }
 
+    // Load libraries dynamically
+    function loadLibraries() {
+      return new Promise((resolve, reject) => {
+        // Check if libraries are already loaded
+        if (window.jsPDF && window.html2canvas) {
+          resolve();
+          return;
+        }
+
+        let loadedCount = 0;
+        const totalLibraries = 2;
+
+        function checkComplete() {
+          loadedCount++;
+          if (loadedCount === totalLibraries) {
+            if (window.jsPDF && window.html2canvas) {
+              resolve();
+            } else {
+              reject(new Error('Libraries failed to load'));
+            }
+          }
+        }
+
+        // Load jsPDF
+        const jsPDFScript = document.createElement('script');
+        jsPDFScript.src = chrome.runtime.getURL('libs/jspdf.umd.min.js');
+        jsPDFScript.onload = checkComplete;
+        jsPDFScript.onerror = () => reject(new Error('Failed to load jsPDF'));
+        document.head.appendChild(jsPDFScript);
+
+        // Load html2canvas
+        const html2canvasScript = document.createElement('script');
+        html2canvasScript.src = chrome.runtime.getURL('libs/html2canvas.min.js');
+        html2canvasScript.onload = checkComplete;
+        html2canvasScript.onerror = () => reject(new Error('Failed to load html2canvas'));
+        document.head.appendChild(html2canvasScript);
+      });
+    }
+
+    // Initialize the extension after libraries are loaded
+    async function initializeExtension() {
+      try {
+        await loadLibraries();
+        console.log('ChatGPT PDF Saver: Libraries loaded successfully');
+        
+        // Your existing code here (button injection, etc.)
+        injectSaveButton();
+      } catch (error) {
+        console.error('ChatGPT PDF Saver: Failed to load libraries:', error);
+      }
+    }
+
     // Initialize the extension
     init();
 
