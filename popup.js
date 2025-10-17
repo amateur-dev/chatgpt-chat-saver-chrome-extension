@@ -1,48 +1,58 @@
 /**
- * Popup Script for ChatGPT PDF Saver
+ * Popup Script for ChatGPT Chat Saver
  * Handles user interactions in the extension popup
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    const openChatGPTButton = document.getElementById('openChatGPT');
-    const savePDFButton = document.getElementById('savePDF');
+    const saveButton = document.getElementById('saveAsPDF');
+    const openButton = document.getElementById('openChatGPT');
     
-    if (savePDFButton) {
-        savePDFButton.addEventListener('click', function() {
-            savePDFButton.disabled = true;
-            savePDFButton.textContent = 'Generating PDF...';
+    if (saveButton) {
+        saveButton.addEventListener('click', async function() {
+            saveButton.disabled = true;
+            const originalText = saveButton.textContent;
+            saveButton.textContent = '⏳ Saving...';
             
-            // Get the active tab
-            chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            try {
+                // Get the active tab
+                const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
                 const tab = tabs[0];
                 
                 // Check if we're on ChatGPT
                 if (!tab.url || (!tab.url.includes('chatgpt.com') && !tab.url.includes('chat.openai.com'))) {
-                    alert('Please visit ChatGPT and open a conversation first.');
-                    savePDFButton.disabled = false;
-                    savePDFButton.textContent = 'Save as PDF';
+                    alert('Please visit ChatGPT first and open a conversation.');
+                    saveButton.disabled = false;
+                    saveButton.textContent = originalText;
                     return;
                 }
                 
-                // Send message to content script to generate PDF
-                chrome.tabs.sendMessage(tab.id, { action: 'generatePDF' }, function(response) {
-                    savePDFButton.disabled = false;
-                    savePDFButton.textContent = 'Save as PDF';
+                // Send message to content script to generate text file
+                chrome.tabs.sendMessage(tab.id, { action: 'generateText' }, function(response) {
+                    saveButton.disabled = false;
+                    saveButton.textContent = originalText;
                     
-                    if (response && response.success) {
+                    if (chrome.runtime.lastError) {
+                        console.log('Message sent (content script will handle)');
+                        // Close popup - the content script will handle the download
+                        setTimeout(() => window.close(), 500);
+                    } else if (response && response.success) {
                         // Close popup after successful generation
                         setTimeout(() => window.close(), 500);
                     } else {
-                        const errorMsg = response && response.error ? response.error : 'Failed to generate PDF. Please ensure you have an active conversation.';
+                        const errorMsg = response && response.error ? response.error : 'Failed to save conversation. Please ensure you have an active conversation and try again.';
                         alert(errorMsg);
                     }
                 });
-            });
+            } catch (error) {
+                saveButton.disabled = false;
+                saveButton.textContent = originalText;
+                alert('Error: ' + error.message);
+            }
         });
     }
     
-    if (openChatGPTButton) {
-        openChatGPTButton.addEventListener('click', function() {
+    if (openButton) {
+        openButton.addEventListener('click', function() {
             chrome.tabs.query({ url: ['https://chat.openai.com/*', 'https://chatgpt.com/*'] }, function(tabs) {
                 if (tabs.length > 0) {
                     chrome.tabs.update(tabs[0].id, { active: true });
