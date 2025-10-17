@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "ChatGPT PDF Saver",
-  "version": "1.0",
-  "description": "Save ChatGPT conversations as PDF",
+  "name": "ChatGPT Chat Saver",
+  "version": "2.0",
+  "description": "Save ChatGPT conversations as text files with robust message detection",
   "permissions": ["activeTab", "tabs", "scripting"],
   "host_permissions": [
     "https://chat.openai.com/*",
@@ -15,7 +15,7 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "ChatGPT PDF Saver - Click to open"
+    "default_title": "ChatGPT Chat Saver - Click to save conversations"
   },
   "content_scripts": [
     {
@@ -24,8 +24,6 @@
         "https://chatgpt.com/*"
       ],
       "js": [
-        "libs/html2canvas.min.js",
-        "libs/jspdf.umd.min.js",
         "content.js"
       ],
       "css": ["styles.css"],
