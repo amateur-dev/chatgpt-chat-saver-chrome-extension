@@ -134,14 +134,14 @@ function determineSender(element) {
   if (element.textContent.toLowerCase().includes('you') ||
       element.querySelector('[data-message-author-role="user"]') ||
       element.className.includes('user')) {
-    return 'You';
+    return 'User';
   }
   
   // Check for assistant indicators
   if (element.textContent.toLowerCase().includes('assistant') ||
       element.textContent.toLowerCase().includes('gpt') ||
       element.querySelector('[data-message-author-role="assistant"]')) {
-    return 'ChatGPT';
+    return 'Assistant';
   }
   
   // Default based on index or content length

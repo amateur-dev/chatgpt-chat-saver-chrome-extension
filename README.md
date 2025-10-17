@@ -1,16 +1,17 @@
 # ChatGPT Chat Saver Chrome Extension
 
-A privacy-focused Chrome extension that adds a "Save as PDF" button to ChatGPT conversations. Capture your entire conversation with full formatting preservation using only client-side processing—no external servers required.
+A privacy-focused Chrome extension that saves ChatGPT conversations as text files. Capture your entire conversation with robust 4-tier message detection using only native JavaScript—no external libraries or servers required.
 
 ## Features
 
 - 🔒 **Privacy First**: All processing happens locally in your browser
-- 📄 **Full Conversation Capture**: Saves complete chat history with formatting
-- 🎨 **Styled Output**: Maintains ChatGPT's visual design in the PDF
-- 💻 **Code Preservation**: Properly formats code blocks and syntax highlighting
-- 🖼️ **Image Support**: Includes images and visual content in the PDF
-- 📐 **Formula Support**: Preserves mathematical formulas and equations
-- 🚀 **Client-Side Only**: Uses jsPDF and html2canvas libraries locally
+- 📄 **Full Conversation Capture**: Saves complete chat history in clean text format
+- 🎯 **Robust Detection**: 4-tier strategy ensures messages are always found
+- 💪 **No Dependencies**: Pure JavaScript - no external libraries needed
+- 🚫 **No CSP Issues**: Works perfectly on ChatGPT's secure site
+- 📁 **Easy Export**: Downloads as `.txt` file with timestamps
+- 🔄 **Smart Fallback**: Always extracts conversation even if DOM changes
+- ⚡ **Fast & Reliable**: Instant download, no processing delays
 
 ## Installation
 
@@ -20,74 +21,85 @@ A privacy-focused Chrome extension that adds a "Save as PDF" button to ChatGPT c
    - Clone or download this repository
    - Extract the files to a folder on your computer
 
-2. **Download Required Libraries**
-   - Download [jsPDF](https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js) and save as `libs/jspdf.umd.min.js`
-   - Download [html2canvas](https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js) and save as `libs/html2canvas.min.js`
-
-3. **Load in Chrome**
+2. **Load in Chrome**
    - Open Chrome and go to `chrome://extensions/`
    - Enable "Developer mode" (toggle in top right)
    - Click "Load unpacked"
    - Select the folder containing the extension files
    - The extension should now appear in your extensions list
 
-4. **Verify Installation**
-   - Navigate to [ChatGPT](https://chat.openai.com/)
-   - Look for the green "Save as PDF" button in the interface
+3. **Verify Installation**
+   - Navigate to [ChatGPT](https://chat.openai.com/) or [chatgpt.com](https://chatgpt.com/)
+   - Click the extension icon in your toolbar
+   - You should see the "Save Chat" button in the popup
    - Start a conversation and test the save functionality
-
-### Method 2: Quick Setup Script
-
-If you have `curl` available, you can use this script to download the required libraries:
-
-```bash
-# Navigate to the extension directory
-cd chatgpt-chat-saver-chrome-extension
-
-# Download jsPDF
-curl -L -o libs/jspdf.umd.min.js "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
-
-# Download html2canvas  
-curl -L -o libs/html2canvas.min.js "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
-
-echo "Libraries downloaded successfully!"
-```
 
 ## Usage
 
-1. **Open ChatGPT**: Navigate to [chat.openai.com](https://chat.openai.com/)
+1. **Open ChatGPT**: Navigate to [chat.openai.com](https://chat.openai.com/) or [chatgpt.com](https://chatgpt.com/)
 2. **Start a Conversation**: Have a conversation with ChatGPT
-3. **Save as PDF**: Click the green "Save as PDF" button that appears in the interface
-4. **Wait for Generation**: The extension will process your conversation (this may take a few seconds for long conversations)
-5. **Download**: Your PDF will automatically download to your default download folder
+3. **Click Extension Icon**: Click the ChatGPT Chat Saver icon in your browser toolbar
+4. **Save Chat**: Click the "💾 Save Chat" button in the popup
+5. **Download**: Your text file will automatically download to your default download folder
 
 ### File Naming
 
-PDFs are automatically named with the format: `chatgpt-conversation-YYYY-MM-DDTHH-MM-SS.pdf`
+Text files are automatically named with the format: `ChatGPT_Conversation_YYYY-MM-DD.txt`
+
+### Example Output
+
+```
+[User]:
+Hello, can you help me with JavaScript?
+================================================================================
+
+[Assistant]:
+Of course! I'd be happy to help. What would you like to know about JavaScript?
+================================================================================
+
+[User]:
+How do I fetch data from an API?
+...
+```
 
 ## File Structure
 
 ```
 chatgpt-chat-saver-chrome-extension/
 ├── manifest.json           # Chrome extension manifest (v3)
-├── content.js              # Main content script
+├── content.js              # Main content script with 4-tier detection
+├── popup.js                # Popup script for Save Chat button
+├── popup.html              # Extension popup UI
 ├── styles.css              # Button and interface styling
-├── libs/                   # External libraries
-│   ├── jspdf.umd.min.js   # PDF generation library
-│   └── html2canvas.min.js  # HTML to canvas conversion
 ├── icons/                  # Extension icons
 │   ├── icon16.png         # 16x16 icon
 │   ├── icon48.png         # 48x48 icon
 │   └── icon128.png        # 128x128 icon
+├── test-suite.js          # Automated test suite
+├── run-tests.sh           # Test runner script
 └── README.md              # This file
 ```
 
 ## Technical Details
 
-### Libraries Used
+### 4-Tier Message Detection Strategy
 
-- **jsPDF**: Client-side PDF generation
-- **html2canvas**: Converts HTML content to canvas for PDF embedding
+The extension uses a robust 4-tier strategy to detect messages, ensuring it works even when ChatGPT's HTML structure changes:
+
+1. **Strategy 1**: `[data-message-id]` attributes - Current ChatGPT standard
+2. **Strategy 2**: `.group` class selectors - Alternative layout support
+3. **Strategy 3**: `[role="main"]` container - Semantic HTML extraction
+4. **Strategy 4**: Fallback text extraction - Always works! Extracts all visible text
+
+### No External Dependencies
+
+Unlike PDF generation which requires external libraries (html2canvas, jspdf) that can be blocked by Content Security Policy (CSP), this extension:
+
+- ✅ Uses only native JavaScript
+- ✅ Has no CSP violations
+- ✅ Works on ChatGPT's locked-down site
+- ✅ Is lightweight and fast
+- ✅ Has no external dependencies
 
 ### Privacy & Security
 
@@ -107,43 +119,58 @@ chatgpt-chat-saver-chrome-extension/
 
 The extension requires minimal permissions:
 - `activeTab`: To interact with the current ChatGPT tab
-- `https://chat.openai.com/*`: Host permission for ChatGPT
+- `tabs`: To query active tab information
+- `scripting`: For content script injection
+- `https://chat.openai.com/*`: Host permission for ChatGPT (OpenAI domain)
+- `https://chatgpt.com/*`: Host permission for ChatGPT (new domain)
 
 ## Troubleshooting
 
-### Button Not Appearing
-- Refresh the ChatGPT page
-- Ensure the extension is enabled in `chrome://extensions/`
-- Check that you're on the correct ChatGPT URL (`chat.openai.com`)
+### Button Not Appearing in Popup
+- Refresh the extension: Go to `chrome://extensions/` and click the reload icon
+- Ensure the extension is enabled
+- Try disabling and re-enabling the extension
 
-### PDF Generation Fails
-- Verify that the library files are properly downloaded
-- Check the browser console for error messages
-- Ensure you have a conversation to save
+### Save Not Working
+- Ensure you're on ChatGPT (chat.openai.com or chatgpt.com)
+- Hard refresh ChatGPT page: `Cmd+Shift+R` (Mac) or `Ctrl+Shift+F5` (Windows)
+- Check browser console for error messages (F12 → Console tab)
+- Ensure you have an active conversation
 
-### Large Conversations
-- Very long conversations may take time to process
-- Consider saving conversations in chunks if they're extremely long
-- The extension handles multi-page PDFs automatically
+### No Text Downloaded
+- Check your browser's download folder
+- Verify downloads are not blocked in browser settings
+- Check browser console for errors (F12 → Console)
+
+### Testing the Extension
+Run the automated test suite:
+```bash
+bash run-tests.sh
+```
 
 ## Development
 
 ### Building from Source
 
 1. Clone the repository
-2. Download the required libraries (see installation instructions)
-3. Load the extension in developer mode
+2. Load the extension in developer mode (see Installation)
+3. Make your changes
+4. Reload the extension in `chrome://extensions/`
 
 ### Customization
 
-You can customize the button appearance by modifying `styles.css`. The content script in `content.js` handles the PDF generation logic.
+You can customize:
+- **Button appearance**: Modify `popup.html` styles
+- **Output format**: Edit `extractFromMessageElements()` in `content.js`
+- **Detection strategies**: Modify `extractConversationText()` in `content.js`
+- **File naming**: Edit `downloadTextFile()` in `content.js`
 
 ### Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
+4. Test thoroughly (run `bash run-tests.sh`)
 5. Submit a pull request
 
 ## License
@@ -152,7 +179,16 @@ This project is open source and available under the MIT License.
 
 ## Changelog
 
-### v1.0.0
+### v2.0 (Current)
+- ✅ Complete rewrite using native JavaScript (no external libraries)
+- ✅ Changed from PDF export to text export (no CSP issues)
+- ✅ Implemented 4-tier robust message detection
+- ✅ Added direct "Save Chat" button in popup
+- ✅ Added smart fallback for text extraction
+- ✅ Enhanced error handling and logging
+- ✅ Updated all documentation
+
+### v1.0
 - Initial release
 - Basic PDF generation functionality
 - ChatGPT interface integration
@@ -162,9 +198,12 @@ This project is open source and available under the MIT License.
 
 If you encounter issues:
 1. Check the troubleshooting section above
-2. Verify all files are properly installed
+2. Run the test suite: `bash run-tests.sh`
 3. Check the browser console for error messages
-4. Create an issue on the GitHub repository
+4. Create an issue on the GitHub repository with:
+   - Browser version
+   - Error messages from console
+   - Steps to reproduce
 
 ---
 
