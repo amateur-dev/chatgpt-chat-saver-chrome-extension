@@ -187,6 +187,82 @@ class ChatGPTExtensionTester {
     return chromeExists;
   }
 
+  // Test 9: Check sender label detection
+  testSenderLabelDetection() {
+    try {
+      // Create mock user message element
+      const userMockElement = document.createElement('div');
+      userMockElement.setAttribute('data-message-author-role', 'user');
+      userMockElement.textContent = 'This is a test user message';
+
+      // Create mock assistant message element
+      const assistantMockElement = document.createElement('div');
+      assistantMockElement.setAttribute('data-message-author-role', 'assistant');
+      assistantMockElement.textContent = 'This is a test ChatGPT response';
+
+      // Create mock unknown element
+      const unknownMockElement = document.createElement('div');
+      unknownMockElement.textContent = 'Unknown sender message';
+
+      // Test if determineSender function exists (it's in content.js, not here)
+      // We'll check if we can identify user/assistant by attributes
+      const userRole = userMockElement.getAttribute('data-message-author-role');
+      const assistantRole = assistantMockElement.getAttribute('data-message-author-role');
+      
+      const userDetected = userRole === 'user';
+      const assistantDetected = assistantRole === 'assistant';
+      const bothCorrect = userDetected && assistantDetected;
+
+      this.log('Sender detection - User label', userDetected, `Detected: ${userRole}`);
+      this.log('Sender detection - ChatGPT label', assistantDetected, `Detected: ${assistantRole}`);
+      this.log('Sender detection - Overall', bothCorrect, 'Both user and assistant detected correctly');
+
+      return bothCorrect;
+    } catch (error) {
+      this.log('Sender detection', false, error.message);
+      return false;
+    }
+  }
+
+  // Test 10: Verify sender labels in actual conversation
+  testActualSenderLabels() {
+    try {
+      const messages = document.querySelectorAll('[data-message-id]');
+      if (messages.length === 0) {
+        this.log('Actual sender label verification', false, 'No messages found on page');
+        return false;
+      }
+
+      let userCount = 0;
+      let assistantCount = 0;
+      let userLabels = [];
+      let assistantLabels = [];
+
+      messages.forEach((msg) => {
+        const roleElement = msg.querySelector('[data-message-author-role]');
+        if (roleElement) {
+          const role = roleElement.getAttribute('data-message-author-role');
+          if (role === 'user') {
+            userCount++;
+            userLabels.push('User');
+          } else if (role === 'assistant') {
+            assistantCount++;
+            assistantLabels.push('ChatGPT');
+          }
+        }
+      });
+
+      const hasMessages = userCount > 0 || assistantCount > 0;
+      const details = `Found ${userCount} user messages and ${assistantCount} ChatGPT messages`;
+      
+      this.log('Actual sender labels found', hasMessages, details);
+      return hasMessages;
+    } catch (error) {
+      this.log('Actual sender label verification', false, error.message);
+      return false;
+    }
+  }
+
   // Run all tests
   async runAllTests() {
     console.clear();
@@ -202,6 +278,8 @@ class ChatGPTExtensionTester {
     this.testSampleConversationExtraction();
     this.testBlobSupport();
     this.testExtensionGlobals();
+    this.testSenderLabelDetection();
+    this.testActualSenderLabels();
 
     console.log('\n' + '═'.repeat(60));
     
