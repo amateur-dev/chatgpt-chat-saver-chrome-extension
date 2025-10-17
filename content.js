@@ -1,41 +1,4 @@
-// ...existing code...
-    async function createPDFFromHTML(element) {
-      const canvas = await window.html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-      const JsPDF = getJsPDF();
-      const pdf = new JsPDF({
-        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const imgWidth = 210;   // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
--     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-+     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
--     const imgData = canvas.toDataURL('image/png');
-+     // JPEG keeps size small; 0.92 is a good default
-+     const imgData = canvas.toDataURL('image/jpeg', 0.92);
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
--     while (heightLeft >= 0) {
-+     while (heightLeft > 0) { // avoid an extra blank/overlapping page
-        position = heightLeft - imgHeight;
-        pdf.addPage();
--       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-+       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-      pdf.save(`chatgpt-conversation-${timestamp}.pdf`);
-    }
-// ...existing code.../**
+/**
  * ChatGPT Chat Saver - Content Script
  * Injects a "Save as PDF" button into ChatGPT interface
  * Captures full conversation and exports to PDF using client-side libraries
@@ -63,7 +26,7 @@
     function getJsPDF() {
       return (window.jspdf && window.jspdf.jsPDF) ||
              (window.jsPDF && window.jsPDF.jsPDF) ||
-             window.jsPDF; // some builds expose ctor directly
+             window.jsPDF;
     }
 
     /**
@@ -347,7 +310,7 @@
     }
 
     /**
-     * Extract message data (reusing the improved version from before)
+     * Extract message data
      */
     function extractMessageData(messageElement) {
         let sender = 'ChatGPT';
@@ -429,8 +392,8 @@
       const pdf = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
       // Calculate dimensions
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 295; // A4 height in mm  
+      const imgWidth = 210;
+      const pageHeight = 295;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
 
