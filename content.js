@@ -130,22 +130,40 @@ function extractFromElements(elements) {
  * Determine if element is from user or assistant
  */
 function determineSender(element) {
-  // Check for user indicators
-  if (element.textContent.toLowerCase().includes('you') ||
-      element.querySelector('[data-message-author-role="user"]') ||
-      element.className.includes('user')) {
-    return 'User';
+  // Check for explicit role attributes first (most reliable)
+  if (element.hasAttribute('data-message-author-role')) {
+    const role = element.getAttribute('data-message-author-role');
+    if (role === 'user') {
+      return 'User';
+    } else if (role === 'assistant') {
+      return 'ChatGPT';
+    }
   }
   
-  // Check for assistant indicators
-  if (element.textContent.toLowerCase().includes('assistant') ||
-      element.textContent.toLowerCase().includes('gpt') ||
-      element.querySelector('[data-message-author-role="assistant"]')) {
-    return 'Assistant';
+  // Check for nested role attributes
+  const roleElement = element.querySelector('[data-message-author-role]');
+  if (roleElement) {
+    const role = roleElement.getAttribute('data-message-author-role');
+    if (role === 'user') {
+      return 'User';
+    } else if (role === 'assistant') {
+      return 'ChatGPT';
+    }
   }
   
-  // Default based on index or content length
-  return 'Message';
+  // Check for class-based indicators
+  if (element.className) {
+    const className = element.className.toLowerCase();
+    if (className.includes('user-message') || className.includes('user-')) {
+      return 'User';
+    }
+    if (className.includes('assistant-message') || className.includes('assistant-')) {
+      return 'ChatGPT';
+    }
+  }
+  
+  // Default to ChatGPT for unidentified messages (safer default)
+  return 'ChatGPT';
 }
 
 /**
