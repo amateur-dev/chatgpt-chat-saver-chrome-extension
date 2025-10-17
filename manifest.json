@@ -3,7 +3,7 @@
   "name": "ChatGPT PDF Saver",
   "version": "1.0",
   "description": "Save ChatGPT conversations as PDF",
-  "permissions": ["activeTab", "tabs"],
+  "permissions": ["activeTab", "tabs", "scripting"],
   "host_permissions": [
     "https://chat.openai.com/*",
     "https://chatgpt.com/*"

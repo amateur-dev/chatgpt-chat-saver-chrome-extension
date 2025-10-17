@@ -476,6 +476,40 @@
         });
     }
 
+    /**
+     * Listen for messages from popup
+     */
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.action === 'generatePDF') {
+            (async () => {
+                try {
+                    const JsPDFCtor = getJsPDF();
+                    if (!JsPDFCtor || typeof window.html2canvas !== 'function') {
+                        sendResponse({
+                            success: false,
+                            error: 'PDF libraries are not loaded. Please reload the page and try again.'
+                        });
+                        return;
+                    }
+
+                    console.log('ChatGPT PDF Saver: Generating PDF from popup request...');
+                    await generatePDF();
+                    
+                    sendResponse({ success: true });
+                } catch (error) {
+                    console.error('ChatGPT PDF Saver: Error generating PDF:', error);
+                    sendResponse({
+                        success: false,
+                        error: error.message || 'Error generating PDF. Please check the console for details.'
+                    });
+                }
+            })();
+            
+            // Return true to indicate we'll send response asynchronously
+            return true;
+        }
+    });
+
     // Initialize the extension
     init();
 
