@@ -3,7 +3,7 @@
   "name": "ChatGPT Chat Saver",
   "version": "2.0.1",
   "description": "Save ChatGPT conversations as text files with robust message detection",
-  "permissions": ["activeTab", "tabs", "scripting"],
+  "permissions": ["tabs"],
   "host_permissions": [
     "https://chat.openai.com/*",
     "https://chatgpt.com/*"
