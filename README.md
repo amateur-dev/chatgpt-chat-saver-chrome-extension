@@ -194,11 +194,12 @@ This project is open source and available under the MIT License.
 - ✅ Enhanced error handling and logging
 - ✅ Updated all documentation
 
-### v2.0.1 (2025-12-16)
+### v2.0.3 (2025-12-16)
 - ✅ Added support for Google Gemini (`gemini.google.com`) to extract and save conversations
 - ✅ Use `Gemini_Conversation_YYYY-MM-DD.txt` filename when saving from Gemini
 - ✅ Improved Gemini extraction with `infinite-scroller` and fallback strategies
 - ✅ Fixed a content script syntax issue that could prevent downloads
+- ✅ Bumped extension version to `v2.0.3` for Chrome Web Store update
 
 ### v1.0
 - Initial release
