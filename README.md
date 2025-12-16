@@ -1,10 +1,11 @@
-# ChatGPT Chat Saver Chrome Extension
+# AI Chat Saver Chrome Extension (ChatGPT & Gemini)
 
-A privacy-focused Chrome extension that saves ChatGPT conversations as text files. Capture your entire conversation with robust 4-tier message detection using only native JavaScript—no external libraries or servers required.
+A privacy-focused Chrome extension that saves ChatGPT and Gemini conversations as text files. Capture your entire conversation with robust message detection using only native JavaScript—no external libraries or servers required.
 
 ## Features
 
 - 🔒 **Privacy First**: All processing happens locally in your browser
+- 🤖 **Multi-Platform**: Supports both ChatGPT and Google Gemini
 - 📄 **Full Conversation Capture**: Saves complete chat history in clean text format
 - 🎯 **Robust Detection**: 4-tier strategy ensures messages are always found
 - 💪 **No Dependencies**: Pure JavaScript - no external libraries needed
@@ -29,22 +30,27 @@ A privacy-focused Chrome extension that saves ChatGPT conversations as text file
    - The extension should now appear in your extensions list
 
 3. **Verify Installation**
-   - Navigate to [ChatGPT](https://chat.openai.com/) or [chatgpt.com](https://chatgpt.com/)
+   - Navigate to [ChatGPT](https://chatgpt.com/) or [Gemini](https://gemini.google.com/)
    - Click the extension icon in your toolbar
    - You should see the "Save Chat" button in the popup
    - Start a conversation and test the save functionality
 
 ## Usage
 
-1. **Open ChatGPT**: Navigate to [chat.openai.com](https://chat.openai.com/) or [chatgpt.com](https://chatgpt.com/)
-2. **Start a Conversation**: Have a conversation with ChatGPT
-3. **Click Extension Icon**: Click the ChatGPT Chat Saver icon in your browser toolbar
+1. **Open Chat App**: Navigate to [ChatGPT](https://chatgpt.com/) or [Gemini](https://gemini.google.com/)
+2. **Start a Conversation**: Have a conversation with the AI
+3. **Click Extension Icon**: Click the extension icon in your browser toolbar
 4. **Save Chat**: Click the "💾 Save Chat" button in the popup
 5. **Download**: Your text file will automatically download to your default download folder
 
 ### File Naming
 
-Text files are automatically named with the format: `ChatGPT_Conversation_YYYY-MM-DD.txt`
+Text files are automatically named with the format: `ChatGPT_Conversation_YYYY-MM-DD.txt` when saving from ChatGPT, and `Gemini_Conversation_YYYY-MM-DD.txt` when saving from Gemini.
+
+### Gemini Notes
+
+- When using Gemini, the extension will attempt to extract visible messages from the conversation container (including `infinite-scroller`), and will fallback to page text if needed.
+- If you don't see a download, reload the Gemini page after updating the extension and check the browser console for errors (F12 → Console).
 
 ### Example Output
 
@@ -187,6 +193,13 @@ This project is open source and available under the MIT License.
 - ✅ Added smart fallback for text extraction
 - ✅ Enhanced error handling and logging
 - ✅ Updated all documentation
+
+### v2.0.3 (2025-12-16)
+- ✅ Added support for Google Gemini (`gemini.google.com`) to extract and save conversations
+- ✅ Use `Gemini_Conversation_YYYY-MM-DD.txt` filename when saving from Gemini
+- ✅ Improved Gemini extraction with `infinite-scroller` and fallback strategies
+- ✅ Fixed a content script syntax issue that could prevent downloads
+- ✅ Bumped extension version to `v2.0.3` for Chrome Web Store update
 
 ### v1.0
 - Initial release
