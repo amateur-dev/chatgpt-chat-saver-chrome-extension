@@ -18,9 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
                 const tab = tabs[0];
                 
-                // Check if we're on ChatGPT
-                if (!tab.url || (!tab.url.includes('chatgpt.com') && !tab.url.includes('chat.openai.com'))) {
-                    alert('Please visit ChatGPT first and open a conversation.');
+                // Check if we're on ChatGPT or Gemini
+                if (!tab.url || (!tab.url.includes('chatgpt.com') && !tab.url.includes('chat.openai.com') && !tab.url.includes('gemini.google.com'))) {
+                    alert('Please visit ChatGPT or Gemini first and open a conversation.');
                     saveButton.disabled = false;
                     saveButton.textContent = originalText;
                     return;
@@ -32,9 +32,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     saveButton.textContent = originalText;
                     
                     if (chrome.runtime.lastError) {
-                        console.log('Message sent (content script will handle)');
-                        // Close popup - the content script will handle the download
-                        setTimeout(() => window.close(), 500);
+                        console.error('Runtime error:', chrome.runtime.lastError);
+                        alert('Connection failed. Please reload the page and try again.');
+                        saveButton.disabled = false;
+                        saveButton.textContent = originalText;
                     } else if (response && response.success) {
                         // Close popup after successful generation
                         setTimeout(() => window.close(), 500);
@@ -53,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (openButton) {
         openButton.addEventListener('click', function() {
-            chrome.tabs.query({ url: ['https://chat.openai.com/*', 'https://chatgpt.com/*'] }, function(tabs) {
+            chrome.tabs.query({ url: ['https://chat.openai.com/*', 'https://chatgpt.com/*', 'https://gemini.google.com/*'] }, function(tabs) {
                 if (tabs.length > 0) {
                     chrome.tabs.update(tabs[0].id, { active: true });
                     chrome.windows.update(tabs[0].windowId, { focused: true });

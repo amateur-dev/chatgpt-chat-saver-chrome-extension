@@ -47,6 +47,12 @@ function generateAndDownloadText() {
 function extractConversationText() {
   console.log('ChatGPT Chat Saver: Extracting conversation text');
   
+  // Check if we are on Gemini
+  if (window.location.hostname.includes('gemini.google.com')) {
+    console.log('ChatGPT Chat Saver: Detected Gemini');
+    return extractGeminiConversation();
+  }
+
   let conversationText = '';
   
   // Strategy 1: Try to find message elements with data-message-id
@@ -87,6 +93,58 @@ function extractConversationText() {
   
   conversationText = filtered.join('\n');
   return cleanText(conversationText);
+}
+
+/**
+ * Extract conversation from Gemini
+ */
+function extractGeminiConversation() {
+  const messages = document.querySelectorAll('user-query, model-response');
+  let text = '';
+  
+  if (messages.length === 0) {
+    console.log('ChatGPT Chat Saver: No Gemini messages found with standard selectors');
+    
+    // Fallback 1: Try to find the infinite scroller and get text from it
+    const scroller = document.querySelector('infinite-scroller');
+    if (scroller && scroller.innerText.length > 100) {
+        console.log('ChatGPT Chat Saver: Extracting from infinite-scroller');
+        return cleanText(scroller.innerText);
+    }
+
+    // Fallback 2: Main content
+    const main = document.querySelector('main');
+    if (main && main.innerText.length > 100) {
+        return cleanText(main.innerText);
+    }
+    
+    // Fallback 3: Body text (last resort)
+    console.log('ChatGPT Chat Saver: Using body text fallback for Gemini');
+    return cleanText(document.body.innerText);
+  }
+
+  messages.forEach(msg => {
+    let sender = 'Unknown';
+    let content = '';
+
+    if (msg.tagName.toLowerCase() === 'user-query') {
+      sender = 'User';
+      // Try to find the text content
+      const queryText = msg.querySelector('.query-text') || msg.querySelector('.query-content') || msg;
+      content = queryText.innerText;
+    } else if (msg.tagName.toLowerCase() === 'model-response') {
+      sender = 'Gemini';
+      // Try to find the markdown content
+      const markdown = msg.querySelector('.markdown') || msg.querySelector('.model-response-text') || msg;
+      content = markdown.innerText;
+    }
+
+    if (content && content.trim()) {
+      text += `[${sender}]:\n${content.trim()}\n\n${'='.repeat(80)}\n\n`;
+    }
+  });
+
+  return cleanText(text);
 }
 
 /**
@@ -215,7 +273,9 @@ function downloadTextFile(content) {
     // Create anchor element
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `ChatGPT_Conversation_${getTimestamp()}.txt`);
+    
+    const prefix = window.location.hostname.includes('gemini') ? 'Gemini' : 'ChatGPT';
+    link.setAttribute('download', `${prefix}_Conversation_${getTimestamp()}.txt`);
     link.style.display = 'none';
     
     // Append to body and click
