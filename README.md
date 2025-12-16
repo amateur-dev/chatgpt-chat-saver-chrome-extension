@@ -194,6 +194,11 @@ This project is open source and available under the MIT License.
 - ✅ Enhanced error handling and logging
 - ✅ Updated all documentation
 
+### v2.0.4 (2025-12-16)
+- ✅ Added auto-injection of content script to fix "Connection failed" errors after updates
+- ✅ Added `scripting` permission to manifest for robust script injection
+- ✅ Improved error handling in popup
+
 ### v2.0.3 (2025-12-16)
 - ✅ Added support for Google Gemini (`gemini.google.com`) to extract and save conversations
 - ✅ Use `Gemini_Conversation_YYYY-MM-DD.txt` filename when saving from Gemini

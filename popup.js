@@ -26,22 +26,52 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 
-                // Send message to content script to generate text file
-                chrome.tabs.sendMessage(tab.id, { action: 'generateText' }, function(response) {
+                // Helper to handle response
+                const handleResponse = (response) => {
                     saveButton.disabled = false;
                     saveButton.textContent = originalText;
                     
-                    if (chrome.runtime.lastError) {
-                        console.error('Runtime error:', chrome.runtime.lastError);
-                        alert('Connection failed. Please reload the page and try again.');
-                        saveButton.disabled = false;
-                        saveButton.textContent = originalText;
-                    } else if (response && response.success) {
-                        // Close popup after successful generation
+                    if (response && response.success) {
                         setTimeout(() => window.close(), 500);
                     } else {
                         const errorMsg = response && response.error ? response.error : 'Failed to save conversation. Please ensure you have an active conversation and try again.';
                         alert(errorMsg);
+                    }
+                };
+
+                // Send message to content script to generate text file
+                chrome.tabs.sendMessage(tab.id, { action: 'generateText' }, function(response) {
+                    if (chrome.runtime.lastError) {
+                        console.log('Connection failed, attempting to inject content script...');
+                        
+                        // Try to inject the script dynamically
+                        chrome.scripting.executeScript({
+                            target: { tabId: tab.id },
+                            files: ['content.js']
+                        }, () => {
+                            if (chrome.runtime.lastError) {
+                                console.error('Injection failed:', chrome.runtime.lastError);
+                                alert('Connection failed. Please reload the page and try again.');
+                                saveButton.disabled = false;
+                                saveButton.textContent = originalText;
+                                return;
+                            }
+                            
+                            // Retry sending message after injection
+                            setTimeout(() => {
+                                chrome.tabs.sendMessage(tab.id, { action: 'generateText' }, function(retryResponse) {
+                                    if (chrome.runtime.lastError) {
+                                        alert('Connection failed even after injection. Please reload the page.');
+                                        saveButton.disabled = false;
+                                        saveButton.textContent = originalText;
+                                    } else {
+                                        handleResponse(retryResponse);
+                                    }
+                                });
+                            }, 100);
+                        });
+                    } else {
+                        handleResponse(response);
                     }
                 });
             } catch (error) {
