@@ -19,7 +19,19 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "ChatGPT Chat Saver - Click to save conversations"
+    "default_title": "AI Chat Saver - Click to save conversations"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "quick-save": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Quick Save current chat"
+    }
   },
   "content_scripts": [
     {

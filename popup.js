@@ -1,91 +1,222 @@
 /**
- * Popup Script for ChatGPT Chat Saver
+ * Popup Script for AI Chat Saver
  * Handles user interactions in the extension popup
+ * v3.0.0 - Added multi-tab support and selection modes
  */
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     const saveButton = document.getElementById('saveAsPDF');
+    const saveAllButton = document.getElementById('saveAllTabs');
     const openButton = document.getElementById('openChatGPT');
     const formatSelector = document.getElementById('formatSelector');
+    const selectionMode = document.getElementById('selectionMode');
+    const lastNInput = document.getElementById('lastNInput');
+    const tabSelectorContainer = document.getElementById('tabSelectorContainer');
+    const tabSelector = document.getElementById('tabSelector');
+    const tabCount = document.getElementById('tabCount');
 
+    // Track all chat tabs
+    let chatTabs = [];
+
+    // Initialize: discover all chat tabs
+    await discoverChatTabs();
+
+    // Selection mode toggle
+    if (selectionMode) {
+        selectionMode.addEventListener('change', function () {
+            if (this.value === 'lastN') {
+                lastNInput.classList.remove('hidden');
+            } else {
+                lastNInput.classList.add('hidden');
+            }
+        });
+    }
+
+    /**
+     * Discover all open ChatGPT/Gemini tabs
+     */
+    async function discoverChatTabs() {
+        try {
+            const tabs = await chrome.tabs.query({
+                url: [
+                    'https://chat.openai.com/*',
+                    'https://chatgpt.com/*',
+                    'https://gemini.google.com/*'
+                ]
+            });
+
+            chatTabs = tabs;
+
+            if (tabs.length > 1) {
+                // Show multi-tab UI
+                tabSelectorContainer.classList.remove('hidden');
+                saveAllButton.classList.remove('hidden');
+
+                // Populate tab selector
+                tabSelector.innerHTML = '';
+                tabs.forEach((tab, index) => {
+                    const option = document.createElement('option');
+                    option.value = tab.id;
+                    const platform = tab.url.includes('gemini') ? '🔷' : '🟢';
+                    const title = tab.title.substring(0, 40) + (tab.title.length > 40 ? '...' : '');
+                    option.textContent = `${platform} ${title}`;
+                    if (tab.active) option.selected = true;
+                    tabSelector.appendChild(option);
+                });
+
+                tabCount.textContent = `${tabs.length} chat tabs open`;
+            }
+        } catch (error) {
+            console.error('Error discovering tabs:', error);
+        }
+    }
+
+    /**
+     * Get save options from UI
+     */
+    function getSaveOptions() {
+        return {
+            format: formatSelector ? formatSelector.value : 'txt',
+            selectionMode: selectionMode ? selectionMode.value : 'full',
+            lastN: lastNInput ? parseInt(lastNInput.value, 10) || 10 : 10
+        };
+    }
+
+    /**
+     * Save chat from a specific tab
+     */
+    async function saveChatFromTab(tabId, options) {
+        return new Promise((resolve, reject) => {
+            const message = {
+                action: 'generateText',
+                format: options.format,
+                selectionMode: options.selectionMode,
+                lastN: options.lastN
+            };
+
+            chrome.tabs.sendMessage(tabId, message, function (response) {
+                if (chrome.runtime.lastError) {
+                    // Try to inject script first
+                    chrome.scripting.executeScript({
+                        target: { tabId: tabId },
+                        files: ['content.js']
+                    }, () => {
+                        if (chrome.runtime.lastError) {
+                            reject(new Error('Could not connect to tab'));
+                            return;
+                        }
+
+                        setTimeout(() => {
+                            chrome.tabs.sendMessage(tabId, message, function (retryResponse) {
+                                if (chrome.runtime.lastError) {
+                                    reject(new Error('Connection failed after injection'));
+                                } else if (retryResponse && retryResponse.success) {
+                                    resolve(retryResponse);
+                                } else {
+                                    reject(new Error(retryResponse?.error || 'Unknown error'));
+                                }
+                            });
+                        }, 100);
+                    });
+                } else if (response && response.success) {
+                    resolve(response);
+                } else {
+                    reject(new Error(response?.error || 'Unknown error'));
+                }
+            });
+        });
+    }
+
+    // Save single chat button
     if (saveButton) {
         saveButton.addEventListener('click', async function () {
             saveButton.disabled = true;
             const originalText = saveButton.textContent;
             saveButton.textContent = '⏳ Saving...';
 
-            // Get selected format
-            const format = formatSelector ? formatSelector.value : 'txt';
+            const options = getSaveOptions();
 
             try {
-                // Get the active tab
-                const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-                const tab = tabs[0];
+                // Determine which tab to save from
+                let targetTabId;
 
-                // Check if we're on ChatGPT or Gemini
-                if (!tab.url || (!tab.url.includes('chatgpt.com') && !tab.url.includes('chat.openai.com') && !tab.url.includes('gemini.google.com'))) {
-                    alert('Please visit ChatGPT or Gemini first and open a conversation.');
-                    saveButton.disabled = false;
-                    saveButton.textContent = originalText;
-                    return;
+                if (chatTabs.length > 1 && tabSelector.value) {
+                    targetTabId = parseInt(tabSelector.value, 10);
+                } else {
+                    // Get active tab
+                    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+                    const tab = tabs[0];
+
+                    if (!tab.url || (!tab.url.includes('chatgpt.com') && !tab.url.includes('chat.openai.com') && !tab.url.includes('gemini.google.com'))) {
+                        alert('Please visit ChatGPT or Gemini first and open a conversation.');
+                        saveButton.disabled = false;
+                        saveButton.textContent = originalText;
+                        return;
+                    }
+
+                    targetTabId = tab.id;
                 }
 
-                // Helper to handle response
-                const handleResponse = (response) => {
-                    saveButton.disabled = false;
-                    saveButton.textContent = originalText;
+                await saveChatFromTab(targetTabId, options);
+                saveButton.textContent = '✅ Saved!';
+                setTimeout(() => window.close(), 500);
 
-                    if (response && response.success) {
-                        setTimeout(() => window.close(), 500);
-                    } else {
-                        const errorMsg = response && response.error ? response.error : 'Failed to save conversation. Please ensure you have an active conversation and try again.';
-                        alert(errorMsg);
-                    }
-                };
-
-                // Send message to content script to generate file with selected format
-                chrome.tabs.sendMessage(tab.id, { action: 'generateText', format: format }, function (response) {
-                    if (chrome.runtime.lastError) {
-                        console.log('Connection failed, attempting to inject content script...');
-
-                        // Try to inject the script dynamically
-                        chrome.scripting.executeScript({
-                            target: { tabId: tab.id },
-                            files: ['content.js']
-                        }, () => {
-                            if (chrome.runtime.lastError) {
-                                console.error('Injection failed:', chrome.runtime.lastError);
-                                alert('Connection failed. Please reload the page and try again.');
-                                saveButton.disabled = false;
-                                saveButton.textContent = originalText;
-                                return;
-                            }
-
-                            // Retry sending message after injection
-                            setTimeout(() => {
-                                chrome.tabs.sendMessage(tab.id, { action: 'generateText', format: format }, function (retryResponse) {
-                                    if (chrome.runtime.lastError) {
-                                        alert('Connection failed even after injection. Please reload the page.');
-                                        saveButton.disabled = false;
-                                        saveButton.textContent = originalText;
-                                    } else {
-                                        handleResponse(retryResponse);
-                                    }
-                                });
-                            }, 100);
-                        });
-                    } else {
-                        handleResponse(response);
-                    }
-                });
             } catch (error) {
-                saveButton.disabled = false;
                 saveButton.textContent = originalText;
-                alert('Error: ' + error.message);
+                alert(error.message || 'Failed to save. Please reload the page and try again.');
+            } finally {
+                saveButton.disabled = false;
+                setTimeout(() => {
+                    saveButton.textContent = originalText;
+                }, 2000);
             }
         });
     }
 
+    // Save all tabs button
+    if (saveAllButton) {
+        saveAllButton.addEventListener('click', async function () {
+            if (chatTabs.length === 0) {
+                alert('No chat tabs found.');
+                return;
+            }
+
+            saveAllButton.disabled = true;
+            const originalText = saveAllButton.textContent;
+            const options = getSaveOptions();
+
+            let saved = 0;
+            let failed = 0;
+
+            for (let i = 0; i < chatTabs.length; i++) {
+                saveAllButton.textContent = `⏳ Saving ${i + 1}/${chatTabs.length}...`;
+
+                try {
+                    await saveChatFromTab(chatTabs[i].id, options);
+                    saved++;
+                    // Small delay between saves to avoid overwhelming
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    console.error(`Failed to save tab ${chatTabs[i].id}:`, error);
+                    failed++;
+                }
+            }
+
+            saveAllButton.disabled = false;
+
+            if (failed === 0) {
+                saveAllButton.textContent = `✅ Saved ${saved} chats!`;
+            } else {
+                saveAllButton.textContent = `⚠️ Saved ${saved}, failed ${failed}`;
+            }
+
+            setTimeout(() => {
+                saveAllButton.textContent = originalText;
+            }, 3000);
+        });
+    }
+
+    // Open chat app button
     if (openButton) {
         openButton.addEventListener('click', function () {
             chrome.tabs.query({ url: ['https://chat.openai.com/*', 'https://chatgpt.com/*', 'https://gemini.google.com/*'] }, function (tabs) {

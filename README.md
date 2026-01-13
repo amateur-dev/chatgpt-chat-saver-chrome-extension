@@ -51,6 +51,10 @@ Save your ChatGPT and Gemini conversations locally in **TXT, Markdown, HTML, or 
 5. Click **💾 Save Chat**
 6. File downloads to your default folder!
 
+### Keyboard Shortcut
+- **Quick Save**: `Ctrl+Shift+S` (Mac: `Cmd+Shift+S`)
+  - Saves the current chat as `.txt` immediately.
+
 ### Example Filename
 ```
 ChatGPT_Refactor_Plan_GPT-4_2026-01-13_14-30.md
@@ -155,6 +159,8 @@ The extension uses multiple strategies to ensure reliable extraction:
 2. **Strategy 2:** `.group` class selectors (alternative layouts)
 3. **Strategy 3:** `[role="main"]` container (semantic HTML)
 4. **Strategy 4:** Fallback text extraction (always works)
+
+For detailed technical documentation on selectors, see [SELECTOR_STRATEGY.md](SELECTOR_STRATEGY.md).
 
 This ensures the extension continues working even when ChatGPT/Gemini updates their UI.
 

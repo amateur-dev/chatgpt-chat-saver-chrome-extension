@@ -197,6 +197,108 @@
         .format-selector select:hover {
             border-color: #9ca3af;
         }
+
+        .selection-mode {
+            margin-bottom: 16px;
+        }
+
+        .selection-mode label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .selection-mode select,
+        .selection-mode input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #374151;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .selection-mode input {
+            margin-top: 8px;
+        }
+
+        .selection-mode input:focus,
+        .selection-mode select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        .tab-selector {
+            margin-bottom: 16px;
+        }
+
+        .tab-selector label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .tab-selector select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #374151;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .tab-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        .tab-count {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .shortcut-hint {
+            font-size: 11px;
+            color: #9ca3af;
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .shortcut-hint kbd {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: monospace;
+            font-size: 11px;
+        }
     </style>
 </head>
 
@@ -249,9 +351,29 @@
             </select>
         </div>
 
+        <div class="selection-mode">
+            <label for="selectionMode">Selection:</label>
+            <select id="selectionMode">
+                <option value="full">Full Conversation</option>
+                <option value="lastN">Last N Messages</option>
+            </select>
+            <input type="number" id="lastNInput" class="hidden" placeholder="Number of messages" min="1" value="10">
+        </div>
+
+        <div class="tab-selector hidden" id="tabSelectorContainer">
+            <label for="tabSelector">Save from Tab:</label>
+            <select id="tabSelector"></select>
+            <div class="tab-count" id="tabCount"></div>
+        </div>
+
         <div class="button-group">
             <button id="saveAsPDF" class="btn btn-primary">💾 Save Chat</button>
+            <button id="saveAllTabs" class="btn btn-secondary hidden">📑 Save All Tabs</button>
             <button id="openChatGPT" class="btn" style="background: #e5e7eb; color: #374151;">Open Chat App</button>
+        </div>
+
+        <div class="shortcut-hint">
+            Quick save: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>
         </div>
 
         <div class="footer">

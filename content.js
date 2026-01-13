@@ -6,14 +6,19 @@
 
 console.log('ChatGPT Chat Saver: Content script loaded');
 
-// Listen for messages from popup
+// Listen for messages from popup or background
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Content Script: Message received', request);
 
   if (request.action === 'generateText') {
     try {
       const format = request.format || 'txt';
-      generateAndDownload(format);
+      const options = {
+        selectionMode: request.selectionMode || 'full',
+        lastN: request.lastN || 10
+      };
+
+      generateAndDownload(format, options);
       sendResponse({ success: true, message: `${format.toUpperCase()} file generated` });
     } catch (error) {
       console.error('Error generating file:', error);
@@ -28,20 +33,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 /**
  * Generate and download conversation in specified format
  */
-function generateAndDownload(format) {
-  console.log(`ChatGPT Chat Saver: Starting ${format} generation`);
+function generateAndDownload(format, options = {}) {
+  console.log(`ChatGPT Chat Saver: Starting ${format} generation with options:`, options);
 
   // Extract messages as structured data
-  const messages = extractMessages();
+  let messages = extractMessages();
 
   if (!messages || messages.length === 0) {
     throw new Error('No conversation found. Please open a conversation and try again.');
   }
 
+  // Apply filtering
+  if (options.selectionMode === 'lastN' && options.lastN > 0) {
+    const originalCount = messages.length;
+    messages = messages.slice(-options.lastN);
+    console.log(`ChatGPT Chat Saver: Filtered from ${originalCount} to last ${messages.length} messages`);
+  }
+
   // Extract metadata
   const metadata = extractMetadata(messages);
 
-  console.log(`ChatGPT Chat Saver: Extracted ${messages.length} messages`);
+  console.log(`ChatGPT Chat Saver: Final count ${messages.length} messages`);
 
   // Format content based on selected format
   let content, mimeType, extension;
@@ -93,7 +105,7 @@ function extractMessages() {
   // Strategy 1: Try to find message elements with data-message-id
   const messageElements = document.querySelectorAll('[data-message-id]');
   if (messageElements.length > 0) {
-    console.log(`ChatGPT Chat Saver: Found ${messageElements.length} messages via [data-message-id]`);
+    console.log(`ChatGPT Chat Saver: [Strategy 1] Found ${messageElements.length} messages via [data-message-id]`);
     messages = Array.from(messageElements).map(el => ({
       role: determineSender(el),
       content: cleanText(el.innerText || el.textContent || '')
@@ -105,7 +117,7 @@ function extractMessages() {
   // Strategy 2: Try to find message groups
   const groups = document.querySelectorAll('.group');
   if (groups.length > 0) {
-    console.log(`ChatGPT Chat Saver: Found ${groups.length} message groups via .group`);
+    console.log(`ChatGPT Chat Saver: [Strategy 2] Found ${groups.length} message groups via .group`);
     messages = Array.from(groups).map(el => ({
       role: 'Unknown',
       content: cleanText(el.innerText || el.textContent || '')
@@ -120,7 +132,7 @@ function extractMessages() {
     document.querySelector('div[class*="prose"]');
 
   if (mainContent && mainContent.innerText.length > 100) {
-    console.log('ChatGPT Chat Saver: Extracting from main content area');
+    console.log('ChatGPT Chat Saver: [Strategy 3] Extracting from main content area');
     return [{
       role: 'Conversation',
       content: cleanText(mainContent.innerText)
@@ -128,7 +140,7 @@ function extractMessages() {
   }
 
   // Strategy 4: Fallback - get all visible text
-  console.log('ChatGPT Chat Saver: Using fallback - extracting all visible text');
+  console.log('ChatGPT Chat Saver: [Strategy 4] Using fallback - extracting all visible text');
   const bodyText = document.body.innerText;
   const lines = bodyText.split('\n').filter(line => {
     const trimmed = line.trim();
