@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -162,8 +163,43 @@
             color: #065f46;
             font-weight: 500;
         }
+
+        .format-selector {
+            margin-bottom: 16px;
+        }
+
+        .format-selector label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .format-selector select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #374151;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .format-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        .format-selector select:hover {
+            border-color: #9ca3af;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -178,7 +214,9 @@
 
         <div class="status">
             <svg class="status-icon" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                <path fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clip-rule="evenodd" />
             </svg>
             <span class="status-text">Extension Active</span>
         </div>
@@ -196,8 +234,19 @@
 
             <div class="instruction">
                 <div class="instruction-number">3</div>
-                <div class="instruction-text">Your conversation will be saved as a text file in your Downloads folder</div>
+                <div class="instruction-text">Your conversation will be saved as a text file in your Downloads folder
+                </div>
             </div>
+        </div>
+
+        <div class="format-selector">
+            <label for="formatSelector">Export Format:</label>
+            <select id="formatSelector">
+                <option value="txt">Plain Text (.txt)</option>
+                <option value="md">Markdown (.md)</option>
+                <option value="html">HTML (.html)</option>
+                <option value="json">JSON (.json)</option>
+            </select>
         </div>
 
         <div class="button-group">
@@ -215,4 +264,5 @@
 
     <script src="popup.js"></script>
 </body>
+
 </html>

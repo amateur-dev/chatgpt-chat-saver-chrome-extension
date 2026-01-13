@@ -1,9 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "ChatGPT Chat Saver",
-  "version": "2.0.4",
-  "description": "Save ChatGPT and Gemini conversations as text files with robust message detection",
-  "permissions": ["tabs", "scripting"],
+  "name": "AI Chat Saver - ChatGPT & Gemini",
+  "version": "3.0.0",
+  "description": "Save ChatGPT and Gemini conversations as TXT, Markdown, HTML, or JSON with metadata and smart filenames",
+  "permissions": [
+    "tabs",
+    "scripting"
+  ],
   "host_permissions": [
     "https://chat.openai.com/*",
     "https://chatgpt.com/*",
@@ -28,7 +31,9 @@
       "js": [
         "content.js"
       ],
-      "css": ["styles.css"],
+      "css": [
+        "styles.css"
+      ],
       "run_at": "document_end"
     }
   ],
